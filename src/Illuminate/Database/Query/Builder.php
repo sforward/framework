@@ -4,6 +4,7 @@ namespace Illuminate\Database\Query;
 
 use Closure;
 use RuntimeException;
+use DateTimeInterface;
 use BadMethodCallException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -546,7 +547,7 @@ class Builder
         );
 
         if (! $value instanceof Expression) {
-            $this->addBinding($value, 'where');
+            $this->addBinding(is_array($value) ? head($value) : $value, 'where');
         }
 
         return $this;
@@ -908,7 +909,7 @@ class Builder
 
         $this->wheres[] = compact('column', 'type', 'boolean', 'not');
 
-        $this->addBinding($values, 'where');
+        $this->addBinding(array_slice($this->cleanBindings($values), 0, 2), 'where');
 
         return $this;
     }
@@ -976,6 +977,12 @@ class Builder
             $value, $operator, func_num_args() == 2
         );
 
+        $value = is_array($value) ? head($value) : $value;
+
+        if ($value instanceof DateTimeInterface) {
+            $value = $value->format('Y-m-d');
+        }
+
         return $this->addDateBasedWhere('Date', $column, $operator, $value, $boolean);
     }
 
@@ -1007,6 +1014,16 @@ class Builder
      */
     public function whereTime($column, $operator, $value, $boolean = 'and')
     {
+        list($value, $operator) = $this->prepareValueAndOperator(
+            $value, $operator, func_num_args() === 2
+        );
+
+        $value = is_array($value) ? head($value) : $value;
+
+        if ($value instanceof DateTimeInterface) {
+            $value = $value->format('H:i:s');
+        }
+
         return $this->addDateBasedWhere('Time', $column, $operator, $value, $boolean);
     }
 
@@ -1042,6 +1059,16 @@ class Builder
             $value, $operator, func_num_args() == 2
         );
 
+        $value = is_array($value) ? head($value) : $value;
+
+        if ($value instanceof DateTimeInterface) {
+            $value = $value->format('d');
+        }
+
+        if (! $value instanceof Expression) {
+            $value = str_pad($value, 2, '0', STR_PAD_LEFT);
+        }
+
         return $this->addDateBasedWhere('Day', $column, $operator, $value, $boolean);
     }
 
@@ -1060,6 +1087,16 @@ class Builder
             $value, $operator, func_num_args() == 2
         );
 
+        $value = is_array($value) ? head($value) : $value;
+
+        if ($value instanceof DateTimeInterface) {
+            $value = $value->format('m');
+        }
+
+        if (! $value instanceof Expression) {
+            $value = str_pad($value, 2, '0', STR_PAD_LEFT);
+        }
+
         return $this->addDateBasedWhere('Month', $column, $operator, $value, $boolean);
     }
 
@@ -1077,6 +1114,12 @@ class Builder
         list($value, $operator) = $this->prepareValueAndOperator(
             $value, $operator, func_num_args() == 2
         );
+
+        $value = is_array($value) ? head($value) : $value;
+
+        if ($value instanceof DateTimeInterface) {
+            $value = $value->format('Y');
+        }
 
         return $this->addDateBasedWhere('Year', $column, $operator, $value, $boolean);
     }
@@ -1357,7 +1400,7 @@ class Builder
         $this->havings[] = compact('type', 'column', 'operator', 'value', 'boolean');
 
         if (! $value instanceof Expression) {
-            $this->addBinding($value, 'having');
+            $this->addBinding(is_array($value) ? head($value) : $value, 'having');
         }
 
         return $this;
