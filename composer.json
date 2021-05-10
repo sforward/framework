@@ -68,6 +68,7 @@
         "illuminate/translation": "self.version",
         "illuminate/validation": "self.version",
         "illuminate/view": "self.version",
+        "laravel/framework": "5.5.*",
         "tightenco/collect": "<5.5.33"
     },
     "require-dev": {
